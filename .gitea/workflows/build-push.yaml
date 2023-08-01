@@ -3,10 +3,10 @@ run-name: Build container images for ${{ gitea.repository }} by @${{ gitea.actor
 on: [push, pull_request, tag]
 
 jobs:
-  build-php-pgmongo:
+  build-php-pg:
     runs-on: ubuntu-latest
     env:
-      IMAGE_NAME: git.ingenius.dev/php-pgmongo
+      IMAGE_NAME: git.ingenius.dev/php-8.2-pg
     container:
       image: catthehacker/ubuntu:act-latest
     steps:
@@ -46,6 +46,6 @@ jobs:
           platforms: |
             linux/amd64
             linux/arm64
-          context: ${{ gitea.workspace }}/php/pgmongo
+          context: ${{ gitea.workspace }}/php/pg
           push: ${{ gitea.event_name != 'pull_request' }}
           tags: ${{ steps.meta.outputs.tags }}
