@@ -46,6 +46,6 @@ jobs:
           platforms: |
             linux/amd64
             linux/arm64
-          context: ${{ gitea.workspace }}/php/pgmongo/Dockerfile
+          context: ${{ gitea.workspace }}/php/pgmongo
           push: ${{ gitea.event_name != 'pull_request' }}
           tags: ${{ steps.meta.outputs.tags }}
