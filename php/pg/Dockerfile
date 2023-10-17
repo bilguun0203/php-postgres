@@ -5,7 +5,7 @@ ADD https://github.com/mlocati/docker-php-extension-installer/releases/latest/do
 RUN chmod +x /usr/local/bin/install-php-extensions
 
 # Install PHP exteionsions
-RUN install-php-extensions \
+RUN IPE_PROCESSOR_COUNT=${nproc} install-php-extensions \
     bcmath \
     curl \
     opcache \
