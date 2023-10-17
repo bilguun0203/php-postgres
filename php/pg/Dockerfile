@@ -1,41 +1,21 @@
 FROM php:8.2-fpm-alpine
 
-# Install system dependencies
-RUN apk add --no-cache \
-    git \
-    curl \
-    openssh-client \
-    zip \
-    unzip \
-    freetype-dev \
-    curl-dev \
-    libjpeg-turbo-dev \
-    libpng-dev \
-    libpq-dev \
-    libzip-dev 
+# Get PHP extension installer
+ADD https://github.com/mlocati/docker-php-extension-installer/releases/latest/download/install-php-extensions /usr/local/bin/
+RUN chmod +x /usr/local/bin/install-php-extensions
 
-# Install PHP extensions
-RUN docker-php-ext-configure gd --with-jpeg --with-freetype \
-    && docker-php-ext-install -j$(nproc) \
+# Install PHP exteionsions
+RUN install-php-extensions \
     bcmath \
     curl \
-    exif \
-    gd \
     opcache \
-    pgsql \
     pdo \
     pdo_pgsql \
-    zip \
-    && docker-php-ext-enable curl \
-    && docker-php-ext-enable opcache \
-    # Clean up
-    && docker-php-source delete
+    pgsql \
+    zip
 
 # Get latest Composer
-COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
-
-# Add composer bin to PATH
-ENV PATH ./vendor/bin:/home/$user/.composer/vendor/bin:$PATH
+RUN install-php-extensions @composer
 
 # Set working directory
 WORKDIR /var/www
