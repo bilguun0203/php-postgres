@@ -3,7 +3,7 @@ run-name: Build container images for ${{ gitea.repository }} by @${{ gitea.actor
 on: [push, pull_request, tag]
 
 jobs:
-  build-base:
+  build-base-alpine:
     runs-on: amd64
     env:
       IMAGE_NAME: git.ingenius.dev/${{ gitea.repository }}
@@ -46,17 +46,16 @@ jobs:
           platforms: |
             linux/amd64
             linux/arm64
-          context: ${{ gitea.workspace }}/base
+          context: ${{ gitea.workspace }}/base-alpine
           push: ${{ gitea.event_name != 'pull_request' }}
           tags: ${{ steps.meta.outputs.tags }}
 
-  build-nodejs:
+  build-base-debian:
     runs-on: amd64
     env:
       IMAGE_NAME: git.ingenius.dev/${{ gitea.repository }}
     container:
       image: catthehacker/ubuntu:act-latest
-    needs: [build-base]
     steps:
       - name: Check out repository code
         uses: actions/checkout@v3
@@ -69,7 +68,7 @@ jobs:
             ${{ env.IMAGE_NAME }}
           flavor: |
             latest=auto
-            prefix=nodejs-,onlatest=true
+            suffix=-debian,onlatest=true
           tags: |
             type=schedule
             type=ref,event=branch
@@ -97,6 +96,57 @@ jobs:
           platforms: |
             linux/amd64
             linux/arm64
-          context: ${{ gitea.workspace }}/nodejs
+          context: ${{ gitea.workspace }}/base-debian
+          push: ${{ gitea.event_name != 'pull_request' }}
+          tags: ${{ steps.meta.outputs.tags }}
+
+  build-runner:
+    runs-on: amd64
+    env:
+      IMAGE_NAME: git.ingenius.dev/${{ gitea.repository }}
+    container:
+      image: catthehacker/ubuntu:act-latest
+    needs: [build-base-debian]
+    steps:
+      - name: Check out repository code
+        uses: actions/checkout@v3
+
+      - name: Docker meta
+        id: meta
+        uses: https://github.com/docker/metadata-action@v4
+        with:
+          images: |
+            ${{ env.IMAGE_NAME }}
+          flavor: |
+            latest=auto
+            suffix=-runner,onlatest=true
+          tags: |
+            type=schedule
+            type=ref,event=branch
+            type=ref,event=pr
+            type=semver,pattern={{version}}
+            type=semver,pattern={{major}}.{{minor}}
+            type=semver,pattern={{major}}
+            type=sha
+            type=raw,value=latest,enable=${{ gitea.ref == format('refs/heads/{0}', 'main') }}
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v2
+
+      - name: Login to container registry
+        if: ${{ gitea.event_name != 'pull_request' }}
+        uses: docker/login-action@v2
+        with:
+          registry: git.ingenius.dev
+          username: ${{ secrets.CONTAINER_REGISTRY_USERNAME }}
+          password: ${{ secrets.CONTAINER_REGISTRY_TOKEN }}
+
+      - name: Build and push Docker image
+        uses: docker/build-push-action@0a97817b6ade9f46837855d676c4cca3a2471fc9
+        with:
+          platforms: |
+            linux/amd64
+            linux/arm64
+          context: ${{ gitea.workspace }}/runner
           push: ${{ gitea.event_name != 'pull_request' }}
           tags: ${{ steps.meta.outputs.tags }}
