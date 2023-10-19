@@ -8,6 +8,8 @@ RUN chmod +x /usr/local/bin/install-php-extensions
 RUN IPE_PROCESSOR_COUNT=${nproc} install-php-extensions \
     bcmath \
     curl \
+    exif\
+    gd \
     opcache \
     pdo \
     pdo_pgsql \
